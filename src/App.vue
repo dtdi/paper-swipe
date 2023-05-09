@@ -2,15 +2,35 @@
 import axios from "axios";
 import { Toast } from "bootstrap";
 import WordHighlighter from "vue-word-highlighter";
-import { useMagicKeys, whenever } from "@vueuse/core";
+import { useMagicKeys, whenever, useSwipe, SwipeDirection } from "@vueuse/core";
+import { computed } from "vue";
 
 const nocoxios = axios.create();
 
-const api = "https://rows.dtdi.de/api/v1/db/data/v1/PIIS/Master";
+const config = {
+  keywords: [],
+  endpoint: "https://rows.dtdi.de/api/v1/db/data/v1/PIIS/Master",
+  authToken: null,
+};
+
+const api = config.endpoint;
+
+const texts = {
+  no_more_results: "no more results",
+  updated: "updated",
+};
 
 export default {
   name: "Papers",
   components: { WordHighlighter },
+  computed: {
+    getCurrentLink() {
+      if (!this.current || !this.current.DOILink || this.current.DOILink == "")
+        return;
+      if (this.current.DOILink.startsWith("http")) return this.current.DOILink;
+      else return `https://doi.org/${this.current.DOILink}`;
+    },
+  },
   methods: {
     loadToken() {
       const cname = "token";
@@ -27,6 +47,7 @@ export default {
       }
       return null;
     },
+
     setToken() {
       nocoxios.defaults.headers.common["xc-token"] = this.token;
       const exdays = 20;
@@ -47,7 +68,7 @@ export default {
         this.isLoading = true;
         nocoxios
           .get(
-            `${api}?sort=-Year&where=%28RelevantTf%2Cis%2Cnull%29~and%28Year%2Cge%2C${this.fromYear}%29&limit=40&shuffle=0&offset=${this.skip}`
+            `${api}?sort=-Year,Title&where=%28RelevantTf%2Ceq%2C1%20-%20mid%29&limit=40&shuffle=0&offset=${this.skip}`
           )
           .then((response) => {
             this.err = false;
@@ -61,7 +82,7 @@ export default {
               const errToast = new Toast(document.getElementById("err-toast"), {
                 autohide: false,
               });
-              this.lastState = "no more results";
+              this.lastState = texts.no_more_results;
               this.err = true;
               errToast.show();
             }
@@ -80,8 +101,8 @@ export default {
         delay: 500,
       });
 
-      if(this.isLoading) {
-        return
+      if (this.isLoading) {
+        return;
       }
 
       this.isLoading = true;
@@ -94,7 +115,7 @@ export default {
         })
         .then((resp) => {
           toast.show();
-          this.lastState = `${resp.data.ID} updated`;
+          this.lastState = `${resp.data.ID} ${texts.updated}`;
           this.loadNext();
         })
         .catch((err) => {
@@ -112,22 +133,14 @@ export default {
     isValidMode() {
       return !this.isLoading && !this.err && this.token;
     },
-    getEmpty() {
+    getStart() {
       return {
-        RelevantTf: null,
-        ArtefactTf: null,
-        FocusTf: null,
-        RelevantLmo: null,
-        ArtefactLmo: null,
-        FocusLmo: null,
-        ID: null,
         Title: "This is PaperSwipe",
-        Year: null,
         Abstract:
           "Introducing PaperSwipe – the revolutionary new tool that makes it easy to classify research papers. Just like a dating app, PaperSwipe allows you to swipe left or right to quickly categorize papers based on your interests. With PaperSwipe, you'll never have to spend hours sorting through stacks of papers again!",
         Type: "repo",
-        Source: "tobias.fehrer@fim-rc.de",
-        DOILink: null,
+        Source: "tobias@dtdi.de",
+        DOILink: "https://tobias-fehrer.de",
         Authors: "Tobias Fehrer",
       };
     },
@@ -140,47 +153,106 @@ export default {
       page: -1,
       totalRows: null,
       current: null,
-      fromYear: 2014,
+      fromYear: 1980,
       skip: 0,
       lastState: null,
       token: null,
       err: false,
       isLoading: false,
+      isSwiping: false,
+      swipeTendency: null,
+      left: 0,
+      opacity: 1,
       queries:
         /business process\w*|design\w*|redesign\w*|improv\w*|reengin\w*|re-engin\w*|improv\w*|assist\w*|enhanc\w*|change\w*|innovat\w*|optimi\w*|automat\w*|support\w*|optimi\w*|machine learning\w*|machine-learning\w*|system\w*|approach\w*|method\w*|algorithm\w*|tool\w*/,
     };
   },
+  mounted() {
+    const card = this.$refs.card;
+    const that = this;
+    const containerWidth = computed(() => this.$refs.container.offsetWidth);
+    const { isSwiping, direction, lengthX } = useSwipe(card, {
+      passive: true,
+      onSwipe(e) {
+        if (that.isValidMode() && containerWidth.value) {
+          if (
+            lengthX.value != 0 &&
+            (direction.value == SwipeDirection.LEFT ||
+              direction.value == SwipeDirection.RIGHT)
+          ) {
+            const length = Math.abs(lengthX.value);
+            that.left = `${-lengthX.value}px`;
+            that.opacity = 1.1 - length / containerWidth.value;
+
+            if (Math.abs(lengthX.value) / containerWidth.value >= 0.5) {
+              that.swipeTendency = direction.value;
+            }
+          } else {
+            that.left = "0";
+            that.opacity = 1;
+            that.swipeTendency = null;
+          }
+        }
+      },
+      onSwipeEnd(e, direction) {
+        //console.log(e, direction, lengthX.value, lengthY.value)
+
+        if (
+          containerWidth.value &&
+          Math.abs(lengthX.value) / containerWidth.value >= 0.4
+        ) {
+          if (direction == SwipeDirection.LEFT) {
+            if (!that.isValidMode()) return;
+            that.current.RelevantTf = "0 - no";
+            that.updateCurrent();
+          }
+          if (direction == SwipeDirection.RIGHT) {
+            if (!that.isValidMode()) return;
+
+            that.current.RelevantTf = "2 - yes";
+            that.updateCurrent();
+          }
+        }
+
+        that.left = "0";
+        that.opacity = 1;
+        that.swipeTendency = null;
+        return e;
+      },
+    });
+    this.isSwiping = isSwiping;
+  },
   created() {
     this.token = this.loadToken();
-    this.current = this.getEmpty();
+    this.current = this.getStart();
     this.loadNext();
 
     const keys = useMagicKeys();
 
     whenever(keys.a, () => {
-      if(!this.isValidMode()) return;
+      if (!this.isValidMode()) return;
       this.current.RelevantTf = "0 - no";
       this.updateCurrent();
     });
     whenever(keys.left, () => {
-      if(!this.isValidMode()) return;
+      if (!this.isValidMode()) return;
       this.current.RelevantTf = "0 - no";
       this.updateCurrent();
     });
     whenever(keys.s, () => {
-      if(!this.isValidMode()) return;
+      if (!this.isValidMode()) return;
       this.current.RelevantTf = "1 - mid";
       this.updateCurrent();
     });
 
     whenever(keys.d, () => {
-      if(!this.isValidMode()) return;
+      if (!this.isValidMode()) return;
 
       this.current.RelevantTf = "2 - yes";
       this.updateCurrent();
     });
     whenever(keys.right, () => {
-      if(!this.isValidMode()) return;
+      if (!this.isValidMode()) return;
 
       this.current.RelevantTf = "2 - yes";
       this.updateCurrent();
@@ -190,8 +262,17 @@ export default {
 </script>
 
 <template>
-  <div class="container site-container">
-    <div class="card">
+  <div class="container site-container" ref="container">
+    <div
+      class="card card-swipe"
+      ref="card"
+      :class="{
+        animated: !isSwiping,
+        'bg-danger text-white': swipeTendency === 'LEFT',
+        'bg-primary text-white': swipeTendency === 'RIGHT',
+      }"
+      :style="{ left, opacity }"
+    >
       <div class="card-body marked">
         <WordHighlighter wrapper-tag="h5" :query="queries" class="card-title">{{
           current.Title
@@ -234,7 +315,10 @@ export default {
       </div>
       <ul class="list-group list-group-flush">
         <li class="list-group-item">{{ current.Authors }}</li>
-        <li class="list-group-item">{{ current.DOILink }}</li>
+        <li class="list-group-item">
+          <a target="_blank" :href="getCurrentLink">{{ current.DOILink }}</a>
+        </li>
+        <li class="list-group-item">{{ current.Type }}</li>
       </ul>
     </div>
   </div>
@@ -333,7 +417,7 @@ export default {
             value="2 - yes"
             v-model="current.RelevantTf"
           />
-          <label for="rel2" class="btn btn-primary">YES</label>
+          <label for="rel2" class="btn btn-primary">Yes</label>
         </div>
       </div>
     </div>
@@ -381,5 +465,3 @@ export default {
     </div>
   </div>
 </template>
-
-<style scoped></style>

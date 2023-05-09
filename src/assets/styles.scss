@@ -12,3 +12,15 @@
   padding-top: 30px;
   padding-bottom: 140px;
 }
+
+.site-container {
+  overflow-y: hidden;
+}
+
+.card-swipe {
+  min-height: 65vh;
+}
+
+.card-swipe.animated {
+  transition: all 0.2s ease-in-out;
+}
