@@ -2,6 +2,10 @@
 
 This is a web application built using Vue.js that enables users to classify and label input data obtained from an API. The app is designed to provide support for structured literature reviews.
 
+### Like this? Have a look at:
+
+[<img src="https://dtdi.de/ads/paper-swipe.png" width="419px" />](https://dtdi.de/i.php?repo=paper-swipe)
+
 ## Features
 
 - Allows users to classify and label input data
