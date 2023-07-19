@@ -10,8 +10,10 @@ During one project, I used it to classify around 10,000 entries. The tool operat
 
 ## Features
 
+![Tool Screenshot](docs/tool-screenshot.jpg)
+
 - Allows users to classify and label input data
-- Fetches data from an API
+- Fetches data from a nocodb API
 - Categorizes data based on the user's interests
 - Provides an easy-to-use interface for quick categorization
 - The user can filter data based on the year
