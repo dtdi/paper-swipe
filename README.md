@@ -1,8 +1,10 @@
 # Structured Literature Review App
 
-This is a web application built using Vue.js that enables users to classify and label input data obtained from an API. The app is designed to provide support for structured literature reviews.
+This tool is designed to facilitate the rapid classification of a list of items based on predetermined criteria - similar to swiping in Tinder or using simple key inputs on a PC. The tool doesn't find new papers but aids in swiftly sorting through existing ones.
 
-### Like this? Have a look at:
+During one project, I used it to classify around 10,000 entries. The tool operates as a website, so it can be used from anywhere (I've found myself classifying entries while waiting in line at the bakery).
+
+### Like this? Also have a look at:
 
 [<img src="https://dtdi.de/ads/paper-swipe.png" width="419px" />](https://dtdi.de/i.php?repo=paper-swipe)
 
@@ -15,7 +17,43 @@ This is a web application built using Vue.js that enables users to classify and 
 - The user can filter data based on the year
 - Allows the user to save an API token
 
-## Getting Started
+## Data Preparation
+
+If you want to use the app, i am more than happy to help with the setup. I'll need your items, classification criteria, and a few app settings.
+
+### Item List Structure
+
+Please provide your list of items, ideally in an Excel spreadsheet with the following columns:
+
+- `title`
+- `abstract`
+- `year`
+- `id`: This can be a simple incremental number, but it will help you later as a reference for further work. We have had good experience with a 3-letter abbreviation of the search result provider + continuous number with padding. For example, `WOS0001` for the first entry from our Web of Science search.
+- `type` (optional): for example, journal or conference
+- `source` (optional): name of the outlet / conference
+
+### Classification Structure
+
+For example, your classifications could look like this:
+
+| Relevant | Artefact             | Focus           |
+| -------- | -------------------- | --------------- |
+| 0 - no   | 0 - no               | 0 - no          |
+| 1 - mid  | 1 - yes              | 1 - bpr         |
+| 2 - yes  | 2 - yes instantiated | 2 - design time |
+
+Most classifications are optional. I've set up the tool to classify 'Relevant No' when swiping left and 'Relevant Yes' when swiping right. Your classification is saved as soon as you swipe or click one of the 'Relevant' buttons.
+
+### App Settings
+
+- **Keywords**: Any keywords you want highlighted. Like in searches, we can work with subwords here.
+  - For example: `business process\w*|design\w*|redesign\w*|improv\w*|reengin\w*|re-engin\w*`
+- **Sort Order**: How you would like your items sorted.
+  - For example, descending by year.
+- **Classification strategy**: Do you want both of you to separately classify all papers, or is it sufficient if each of you looks at a paper?
+  - Depending on your choice, you'll get one or two fields for each classification category. The Excel file you can export from the tool afterwards allows you to easily identify conflicts and adjust accordingly.
+
+## Getting Started with the code
 
 To run the project locally, follow these steps:
 
