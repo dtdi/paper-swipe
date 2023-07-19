@@ -20,10 +20,21 @@ This is a web application built using Vue.js that enables users to classify and 
 To run the project locally, follow these steps:
 
 1. Clone the repository
-2. Install the dependencies by running `npm install`
-3. Start the development server using `npm run serve`
+2. Customize code for your lit rev.
+3. Install the dependencies by running `npm install`
+4. Start the development server using `npm run serve`
 
 The app should now be accessible at `http://localhost:8080`.
+
+## Customization
+
+in your .env file:
+
+```
+VITE_ENDPOINT=[Your NocoDB Instance]
+VITE_NOCODB_QUERY="sort=-Year,Title&where=(RelevantTf,eq,1 - mid)&limit=40&shuffle=0"
+VITE_HIGHLIGHT_REGEX="/business process\w*|design\w*|redesign\w*|improv\w*|reengin\w*|re-engin\w*|improv\w*|assist\w*|enhanc\w*|change\w*|innovat\w*|optimi\w*|automat\w*|support\w*|optimi\w*|machine learning\w*|machine-learning\w*|system\w*|approach\w*|method\w*|algorithm\w*|tool\w*/"
+```
 
 ## Usage
 

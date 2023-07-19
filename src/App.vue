@@ -9,7 +9,7 @@ const nocoxios = axios.create();
 
 const config = {
   keywords: [],
-  endpoint: "https://rows.dtdi.de/api/v1/db/data/v1/PIIS/Master",
+  endpoint: import.meta.env.VITE_ENDPOINT,
   authToken: null,
 };
 
@@ -68,7 +68,9 @@ export default {
         this.isLoading = true;
         nocoxios
           .get(
-            `${api}?sort=-Year,Title&where=%28RelevantTf%2Ceq%2C1%20-%20mid%29&limit=40&shuffle=0&offset=${this.skip}`
+            `${api}?${encodeURIComponent(
+              import.meta.env.VITE_NOCODB_QUERY
+            )}&offset=${this.skip}`
           )
           .then((response) => {
             this.err = false;
@@ -163,8 +165,7 @@ export default {
       swipeTendency: null,
       left: 0,
       opacity: 1,
-      queries:
-        /business process\w*|design\w*|redesign\w*|improv\w*|reengin\w*|re-engin\w*|improv\w*|assist\w*|enhanc\w*|change\w*|innovat\w*|optimi\w*|automat\w*|support\w*|optimi\w*|machine learning\w*|machine-learning\w*|system\w*|approach\w*|method\w*|algorithm\w*|tool\w*/,
+      queries: import.meta.env.VITE_HIGHLIGHT_REGEX,
     };
   },
   mounted() {
